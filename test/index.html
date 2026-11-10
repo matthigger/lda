@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>LDA engine check</title>
+  <style>body { font: 14px/1.4 ui-monospace, monospace; margin: 16px; }</style>
+</head>
+<body>
+  <!-- Compares js/gauss.js against sklearn / scipy (test/ref.js, made by
+       build/make_ref.py), and checks that the projection tab's samples
+       have exactly the mean and covariance on screen. -->
+  <pre id="out">running</pre>
+  <script>const BUILD = null;</script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/linalg.js"></script>
+  <script src="../js/gauss.js"></script>
+  <script src="ref.js"></script>
+  <script>
+    (() => {
+      const lines = [];
+      let bad = 0;
+      const maxErr = (a, b) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
+      const check = (name, err, tol) => {
+        const ok = err < tol;
+        if (!ok) bad++;
+        lines.push(`${ok ? "PASS" : "FAIL"} ${name.padEnd(34)} max err ${
+          err.toExponential(1)}`);
+      };
+
+      REF.fit.forEach((c, i) => {
+        const tag = `fit ${i} (n = ${c.X0.length} + ${c.X1.length})`;
+        const lda = fitModel(c.X0, c.X1, true);
+        const qda = fitModel(c.X0, c.X1, false);
+        check(`${tag} LDA g vs sklearn`,
+          maxErr(c.P.map(x => logOdds(lda, x)), c.lda_g), 1e-9);
+        const lf = linearForm(lda);
+        check(`${tag} LDA w, b vs sklearn`,
+          maxErr([...lf.w, lf.b], [...c.lda_w, c.lda_b]), 1e-9);
+        check(`${tag} QDA g vs scipy`,
+          maxErr(c.P.map(x => logOdds(qda, x)), c.qda_g), 1e-9);
+      });
+
+      REF.truth.forEach((c, i) => {
+        const md = model(c.mu0, c.mu1, c.S0, c.S1, c.pi1);
+        check(`truth ${i} g vs scipy`,
+          maxErr(c.P.map(x => logOdds(md, x)), c.g), 1e-9);
+        const sh = model(c.mu0, c.mu1, c.S0, c.S0, c.pi1), lf = linearForm(sh);
+        check(`truth ${i} shared: g = wᵀx + b`, maxErr(
+          c.P.map(x => dot(lf.w, x) + lf.b), c.g_shared), 1e-9);
+        check(`truth ${i} Fisher direction`,
+          maxErr(fisherDir(c.mu0, c.mu1, c.S0), c.fisher), 1e-9);
+      });
+
+      // Whitened clouds: exactly the mean and covariance asked for.
+      for (const [seed, mu, M] of [[3, [0, -1], { a: 4.6, b: 2.4, d: 1.9 }],
+        [8, [5, -2], { a: 10, b: 0, d: 0.1 }], [9, [2, 3], { a: 3, b: -1, d: 4 }]]) {
+        const { m, C } = meanCov(cloud(whiten(normals(seed, 40)), mu, M));
+        check(`cloud seed ${seed}: mean, cov exact`,
+          Math.max(norm(sub(m, mu)), matDiff(C, M)), 1e-12);
+      }
+
+      lines.push(bad ? `${bad} FAILED` : "ALL PASS");
+      document.getElementById("out").textContent = lines.join("\n");
+      document.title = bad ? "FAIL" : "PASS";
+    })();
+  </script>
+</body>
+</html>

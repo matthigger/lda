@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LDA, visually</title>
+  <meta name="description" content="Project two classes onto a line and
+    find the direction that separates them best (Fisher's LDA); then the
+    Bayes boundary between two Gaussians, a line when they share a
+    covariance (LDA) and a conic when they don't (QDA).">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='11' cy='19' rx='8' ry='4' transform='rotate(-30 11 19)' fill='%232563eb' fill-opacity='.3'/%3E%3Cellipse cx='21' cy='13' rx='8' ry='4' transform='rotate(-30 21 13)' fill='%23ea580c' fill-opacity='.3'/%3E%3Cpath d='M6 5 L26 27' stroke='%237c3aed' stroke-width='2.6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>LDA, visually</h1>
+    <p class="sub">Find the line that pulls two classes apart, then the
+      Bayes boundary it comes from: straight when the classes share a
+      covariance (LDA), curved when they don't (QDA).</p>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-mode="fisher">Projection onto a
+        line</button>
+      <button class="tab" role="tab" data-mode="bayes">Bayes boundary: LDA
+        &rarr; QDA</button>
+    </nav>
+  </header>
+
+  <section class="intro card">
+    <div data-show="fisher">
+      <h2>Which line separates best?</h2>
+      <p class="goal"><b>Goal:</b> describe each 2-d sample by one number,
+        its score <i>t</i> = <b>w</b><sup>T</sup>(<b>x</b> &minus;
+        <b>m</b>) along a unit direction <b>w</b>, and classify by a
+        threshold <i>&tau;</i> on <i>t</i>, with the two classes' scores
+        overlapping as little as possible.</p>
+      <p class="goal approach"><b>Approach:</b> (Fisher) push the projected
+        class means apart while keeping each projected class narrow: a big
+        gap relative to the spread.</p>
+      <div class="formula">
+        max<sub><b>w</b></sub> <i>J</i>(<b>w</b>) =
+        <span class="frac"><span>(<b>w</b><sup>T</sup>(<b>&mu;</b><sub>1</sub>
+        &minus; <b>&mu;</b><sub>0</sub>))<sup>2</sup></span><span><b>w</b><sup>T</sup>&Sigma;<b>w</b></span></span>
+        <span class="implies">&rArr;</span>
+        <b>w</b> &prop; &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
+        &minus; <b>&mu;</b><sub>0</sub>)
+      </div>
+      <p class="muted">&Sigma; is the covariance within each class, shared
+        by both (with 1/<i>n</i>); each class's 40 samples have exactly
+        mean <b>&mu;</b><sub><i>k</i></sub> and covariance &Sigma;, and
+        <b>m</b> = (<b>&mu;</b><sub>0</sub> + <b>&mu;</b><sub>1</sub>)/2.
+        <i>J</i> ignores the length of <b>w</b>; its best value
+        <i>J</i>* = (<b>&mu;</b><sub>1</sub> &minus;
+        <b>&mu;</b><sub>0</sub>)<sup>T</sup>&Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
+        &minus; <b>&mu;</b><sub>0</sub>) is the squared Mahalanobis
+        distance between the means.</p>
+    </div>
+
+    <div data-show="bayes">
+      <h2>Bayes boundary: LDA &rarr; QDA</h2>
+      <p class="goal"><b>Goal:</b> predict the class with the larger
+        posterior <i>P</i>(<i>y</i> = <i>k</i> | <b>x</b>) &prop;
+        <i>&pi;<sub>k</sub></i> <i>N</i>(<b>x</b>;
+        <b>&mu;</b><sub><i>k</i></sub>, &Sigma;<sub><i>k</i></sub>), the
+        Bayes classifier: when the Gaussians are right, no rule has a
+        lower error.</p>
+      <p class="goal approach"><b>Approach:</b> the sign of the log-odds,
+        with <i>d<sub>k</sub></i><sup>2</sup> = (<b>x</b> &minus;
+        <b>&mu;</b><sub><i>k</i></sub>)<sup>T</sup>&Sigma;<sub><i>k</i></sub><sup>&minus;1</sup>(<b>x</b>
+        &minus; <b>&mu;</b><sub><i>k</i></sub>) the squared Mahalanobis
+        distance to each mean. With one shared &Sigma; the quadratic terms
+        cancel and the boundary <i>g</i> = 0 is a line (LDA); otherwise it
+        is a conic (QDA).</p>
+      <div class="formula">
+        <i>g</i>(<b>x</b>) = &frac12;<i>d</i><sub>0</sub><sup>2</sup>
+        &minus; &frac12;<i>d</i><sub>1</sub><sup>2</sup> &minus; &frac12;
+        log<span class="frac"><span>|&Sigma;<sub>1</sub>|</span><span>|&Sigma;<sub>0</sub>|</span></span>
+        + log<span class="frac"><span><i>&pi;</i><sub>1</sub></span><span><i>&pi;</i><sub>0</sub></span></span>
+        <span class="implies">&rArr;</span><span class="nowrap">&Sigma;<sub>0</sub> =
+        &Sigma;<sub>1</sub>: <i>g</i>(<b>x</b>) = <b>w</b><sup>T</sup><b>x</b>
+        + <i>b</i>, <b>w</b> = &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
+        &minus; <b>&mu;</b><sub>0</sub>)</span>
+      </div>
+      <p class="muted">You set the true Gaussians and prior; <i>n</i>
+        training samples are drawn from them. LDA and QDA fit the means,
+        priors and covariances (maximum likelihood, 1/<i>n</i>) to the
+        training samples only, then classify by the sign of their own
+        <i>g</i>.</p>
+    </div>
+
+    <div>
+      <h3>Try this</h3>
+      <ul class="try" data-show="fisher">
+        <li>Press <em>Sweep w</em> and watch the two histograms. Where is
+          <i>J</i> highest?
+          <details class="answer"><summary>Answer</summary>At <b>w</b>
+            &prop; &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
+            &minus; <b>&mu;</b><sub>0</sub>) (or its negative), the peak
+            of the curve: there the two bumps are as far apart as they can
+            be, measured in widths. Setting &nabla;<i>J</i> = 0 gives
+            &Sigma;<b>w</b> &prop; <b>&mu;</b><sub>1</sub> &minus;
+            <b>&mu;</b><sub>0</sub>.</details>
+        </li>
+        <li>Pick <em>skinny</em> (the notebook's last example) and press
+          <em>w = &mu;₁ &minus; &mu;₀</em>. Why not just use the
+          difference of the means?
+          <details class="answer"><summary>Answer</summary>The means
+            differ equally in both features, but the horizontal variance
+            is 10 and the vertical only 0.1. Along
+            <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> the
+            horizontal noise swamps the gap: <i>J</i> is about 4% of the
+            best. &Sigma;<sup>&minus;1</sup> discounts the noisy feature,
+            so the best <b>w</b> is nearly vertical.</details>
+        </li>
+        <li>Try <em>ICA part 1</em> and <em>part 2</em>. Why is
+          <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> already
+          the best direction there?
+          <details class="answer"><summary>Answer</summary>Because
+            <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> is an
+            eigenvector of &Sigma; (in part 2 every direction is, since
+            &Sigma; = <i>I</i>), so &Sigma;<sup>&minus;1</sup> only
+            rescales it.</details>
+        </li>
+        <li>On <em>tilted</em>, press <em>w = v₁ (PCA)</em>. How well does
+          PCA's top direction separate the classes?
+          <details class="answer"><summary>Answer</summary>Badly: about
+            9% of the best <i>J</i>, with the bumps piled on top of each
+            other. PCA never looks at the labels, so it picks the direction
+            of most total spread, here the long axis both clouds share. The
+            classes differ across that axis.</details>
+        </li>
+        <li>At the best <b>w</b>, drag <i>&tau;</i>. Where are the fewest
+          training errors?
+          <details class="answer"><summary>Answer</summary>Near
+            <i>&tau;</i> = 0, the midpoint <b>m</b>: the classes are the
+            same size and the same width along <b>w</b>, so the bumps cross
+            halfway between their means. The next tab shows that this line
+            is the Bayes boundary for equal priors.</details>
+        </li>
+      </ul>
+      <ul class="try" data-show="bayes">
+        <li>With <em>share &Sigma;</em> on, slide <i>&pi;</i><sub>1</sub>.
+          What does the boundary do?
+          <details class="answer"><summary>Answer</summary>It slides but
+            never turns, toward the rarer class: the prior is only in
+            <i>b</i>, through log(<i>&pi;</i><sub>1</sub> /
+            <i>&pi;</i><sub>0</sub>). Its normal <b>w</b> =
+            &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub> &minus;
+            <b>&mu;</b><sub>0</sub>) is the Fisher direction from the
+            first tab.</details>
+        </li>
+        <li>Pick <em>one wider</em>. What shape is the Bayes boundary, and
+          why?
+          <details class="answer"><summary>Answer</summary>An ellipse
+            around the tight class 0. Far from <b>&mu;</b><sub>0</sub> in
+            any direction, the wide class is the more likely one, so class
+            0 only wins on an island around its mean.</details>
+        </li>
+        <li>Pick <em>crossed</em>, then <em>same mean</em>. How does LDA
+          do?
+          <details class="answer"><summary>Answer</summary>About as well
+            as a coin flip, or always guessing the bigger class. The means
+            match, so <b>&mu;&#770;</b><sub>1</sub> &minus;
+            <b>&mu;&#770;</b><sub>0</sub> is just noise and LDA's line is
+            nearly arbitrary. The classes differ only in their covariances,
+            which only QDA uses: a hyperbola for crossed, a circle for same
+            mean.</details>
+        </li>
+        <li>Back on <em>shared &Sigma;</em>, set <i>n</i> = 10 and press
+          <em>New samples</em> a few times. Compare LDA and QDA on train
+          and on test, then raise <i>n</i> to 400.
+          <details class="answer"><summary>Answer</summary>At
+            <i>n</i> = 10, QDA does at least as well as LDA on the training
+            samples almost every time, yet worse on test almost every time:
+            it fits 11 numbers (two means, two covariances, a prior) to
+            LDA's 8, and the extra 3 chase noise. The truth here has one
+            &Sigma;, so LDA is the right model. With 400 samples both land
+            near the Bayes error.</details>
+        </li>
+        <li>Hover a point on the Bayes boundary. What do
+          <i>d</i><sub>0</sub><sup>2</sup> and
+          <i>d</i><sub>1</sub><sup>2</sup> show?
+          <details class="answer"><summary>Answer</summary>With a shared
+            &Sigma; and equal priors they are equal: the boundary is the
+            set of points equally far from both means, measured in
+            &Sigma;'s units rather than in plain distance.</details>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============================================== projection tab -->
+  <main class="panel" data-show="fisher">
+    <div class="stage card">
+      <div class="stage-head">
+        <span class="key"><i class="dot c0"></i><span>class 0</span></span>
+        <span class="key"><i class="dot c1"></i><span>class 1</span></span>
+        <span class="key"><i class="ln w"></i><span><b>w</b> and its line
+          (drag either)</span></span>
+        <span class="key"><i class="dot hb"></i><span>histograms of the scores
+          <i>t</i>, beside the line</span></span>
+        <span class="key"><i class="ln bound"></i><span>boundary at
+          <i>&tau;</i> (drag the tick)</span></span>
+        <span class="key"><i class="dot missk"></i><span>misclassified</span></span>
+      </div>
+      <svg id="p-plane" aria-label="two classes, the line along w and
+        histograms of their projections"></svg>
+      <p class="hint">Drag the tip of <b>w</b> or anywhere on its line, the
+        means <b>&mu;</b><sub>0</sub> and <b>&mu;</b><sub>1</sub>, or the
+        threshold tick <i>&tau;</i> on the histograms' baseline.</p>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2>Means and shared covariance &Sigma;</h2>
+        <div class="matrix-row">
+          <span class="mlabel"><b>&mu;</b><sub>0</sub> =</span>
+          <div class="vector"><input id="p-m00" type="number" step="0.1"
+            aria-label="mu0, first entry"><input id="p-m01" type="number"
+            step="0.1" aria-label="mu0, second entry"></div>
+          <span class="mlabel"><b>&mu;</b><sub>1</sub> =</span>
+          <div class="vector"><input id="p-m10" type="number" step="0.1"
+            aria-label="mu1, first entry"><input id="p-m11" type="number"
+            step="0.1" aria-label="mu1, second entry"></div>
+        </div>
+        <div class="matrix-row">
+          <span class="mlabel">&Sigma; =</span>
+          <div class="matrix">
+            <input id="p-s00" type="number" step="0.1" aria-label="Sigma00">
+            <input id="p-s01" type="number" step="0.1" aria-label="Sigma01">
+            <input id="p-s10" type="number" step="0.1" aria-label="Sigma10"
+              title="Σ is symmetric: this entry copies the one above">
+            <input id="p-s11" type="number" step="0.1" aria-label="Sigma11">
+          </div>
+          <span class="muted">symmetric: the two off-diagonal entries move
+            together</span>
+        </div>
+        <p class="warn" id="p-warn" hidden></p>
+        <h3>Presets</h3>
+        <div class="seg wrap" id="p-presets"></div>
+        <div class="buttons"><button id="p-resample">New samples</button>
+        </div>
+        <label class="check"><input type="checkbox" id="p-ell"><span>2-sd
+          ellipses</span></label>
+        <label class="check"><input type="checkbox" id="p-side"><span>shade
+          each side of the boundary</span></label>
+        <label class="check"><input type="checkbox" id="p-drop"><span>draw
+          each sample's drop to the line</span></label>
+      </div>
+
+      <div class="card readout">
+        <h3>Projection onto <b>w</b></h3>
+        <div id="p-read"></div>
+        <div class="kept" id="p-bar"></div>
+        <div class="buttons">
+          <button id="p-wd">w = μ₁ − μ₀</button>
+          <button id="p-wf">w = Σ⁻¹(μ₁ − μ₀)</button>
+          <button id="p-wp">w = v₁ (PCA)</button>
+          <button id="p-spin">Sweep w</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><i>J</i> by direction</h3>
+        <svg id="p-chart" class="chart pick" aria-label="Fisher's objective
+          J against the angle of w"></svg>
+        <p class="muted">Click or drag to set the angle of <b>w</b>. The
+          markers are where <b>w</b> = &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
+          &minus; <b>&mu;</b><sub>0</sub>), <b>&mu;</b><sub>1</sub> &minus;
+          <b>&mu;</b><sub>0</sub> and PCA's <b>v</b><sub>1</sub> (both
+          classes pooled) land.</p>
+      </div>
+
+      <div class="card readout">
+        <h3>Classify by a threshold</h3>
+        <div id="p-tread"></div>
+        <p class="muted">Predict class 1 on <b>&mu;</b><sub>1</sub>'s side of
+          <i>&tau;</i>.</p>
+        <div class="buttons"><button id="p-tau0">&tau; = 0 (midpoint)</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================================================== bayes tab -->
+  <main class="panel" data-show="bayes">
+    <div class="stage card">
+      <div class="stage-head">
+        <span class="key"><i class="dot c0"></i><span>class 0</span></span>
+        <span class="key"><i class="dot c1"></i><span>class 1</span></span>
+        <span class="key"><i class="ln bayes"></i><span>Bayes (true)</span></span>
+        <span class="key"><i class="ln lda"></i><span>LDA fit</span></span>
+        <span class="key"><i class="ln qda"></i><span>QDA fit</span></span>
+        <span class="key"><i class="dot shade"></i><span>shade: true
+          <i>P</i>(<i>y</i> = 1 | <b>x</b>)</span></span>
+      </div>
+      <svg id="b-plane" aria-label="training samples of two Gaussian
+        classes with the Bayes, LDA and QDA boundaries"></svg>
+      <p class="hint">Drag the means <b>&mu;</b><sub>0</sub> and
+        <b>&mu;</b><sub>1</sub>. Hover (or tap) anywhere for the log-odds
+        there. Shown: the training samples and the true 2-sd ellipses.</p>
+    </div>
+
+    <div class="side">
+      <div class="card">
+        <h2>True classes</h2>
+        <div class="matrix-row">
+          <span class="mlabel"><b>&mu;</b><sub>0</sub> =</span>
+          <div class="vector"><input id="b-m00" type="number" step="0.1"
+            aria-label="mu0, first entry"><input id="b-m01" type="number"
+            step="0.1" aria-label="mu0, second entry"></div>
+          <span class="mlabel"><b>&mu;</b><sub>1</sub> =</span>
+          <div class="vector"><input id="b-m10" type="number" step="0.1"
+            aria-label="mu1, first entry"><input id="b-m11" type="number"
+            step="0.1" aria-label="mu1, second entry"></div>
+        </div>
+        <div class="matrix-row">
+          <span class="mlabel">&Sigma;<sub>0</sub> =</span>
+          <div class="matrix">
+            <input id="b-s000" type="number" step="0.1" aria-label="Sigma0 00">
+            <input id="b-s001" type="number" step="0.1" aria-label="Sigma0 01">
+            <input id="b-s010" type="number" step="0.1" aria-label="Sigma0 10">
+            <input id="b-s011" type="number" step="0.1" aria-label="Sigma0 11">
+          </div>
+          <span class="mlabel">&Sigma;<sub>1</sub> =</span>
+          <div class="matrix">
+            <input id="b-s100" type="number" step="0.1" aria-label="Sigma1 00">
+            <input id="b-s101" type="number" step="0.1" aria-label="Sigma1 01">
+            <input id="b-s110" type="number" step="0.1" aria-label="Sigma1 10">
+            <input id="b-s111" type="number" step="0.1" aria-label="Sigma1 11">
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="b-share"><span>share
+          &Sigma; (&Sigma;<sub>1</sub> = &Sigma;<sub>0</sub>, LDA's
+          assumption)</span></label>
+        <p class="warn" id="b-warn" hidden></p>
+        <h3>Presets</h3>
+        <div class="seg wrap" id="b-presets"></div>
+        <label class="slider"><span>prior <i>&pi;</i><sub>1</sub></span>
+          <span class="pair"><input type="range" id="b-pir" min="0.1"
+            max="0.9" step="0.01"><input type="number" id="b-pi" min="0.1"
+            max="0.9" step="0.05"></span></label>
+        <label class="slider"><span>training <i>n</i></span>
+          <span class="pair"><input type="range" id="b-nr" min="10"
+            max="400" step="2"><input type="number" id="b-n" min="10"
+            max="400" step="10"></span></label>
+        <div class="buttons"><button id="b-resample">New samples</button>
+        </div>
+      </div>
+
+      <div class="card readout">
+        <h3>Error</h3>
+        <div id="b-errs"></div>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="b-show-bayes"><span>Bayes</span></label>
+          <label class="check"><input type="checkbox" id="b-show-lda"><span>LDA</span></label>
+          <label class="check"><input type="checkbox" id="b-show-qda"><span>QDA</span></label>
+          <label class="check"><input type="checkbox" id="b-show-shade"><span>shade</span></label>
+          <label class="check"><input type="checkbox" id="b-show-ell"><span>ellipses</span></label>
+        </div>
+      </div>
+
+      <div class="card readout">
+        <h3>The line <i>g</i>(<b>x</b>) = <b>w</b><sup>T</sup><b>x</b> + <i>b</i></h3>
+        <div id="b-lin"></div>
+        <p class="muted" id="b-lin-note">The true classes have different
+          &Sigma;<sub><i>k</i></sub>, so the Bayes boundary is not a line;
+          LDA still fits one.</p>
+      </div>
+
+      <div class="card readout">
+        <h3>At the pointer (true Gaussians)</h3>
+        <div id="b-at"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Part of the DS 4400 &ldquo;visually&rdquo; demos.
+    &middot;
+    <a href="https://github.com/matthigger/lda">Source on GitHub</a>
+    &middot;
+    <span id="build"></span>
+  </footer>
+
+  <script src="js/version.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/linalg.js"></script>
+  <script src="js/gauss.js"></script>
+  <script src="js/fisher.js"></script>
+  <script src="js/bayes.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
