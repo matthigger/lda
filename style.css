@@ -458,9 +458,9 @@ input[type="number"]:focus {
 .drop { stroke-width: 1; stroke-opacity: .35; pointer-events: none; }
 .drop.c0 { stroke: var(--c0); }
 .drop.c1 { stroke: var(--c1); }
-.side { pointer-events: none; fill-opacity: .07; }
-.side.c0 { fill: var(--c0); }
-.side.c1 { fill: var(--c1); }
+.halfplane { pointer-events: none; fill-opacity: .07; }
+.halfplane.c0 { fill: var(--c0); }
+.halfplane.c1 { fill: var(--c1); }
 .ell {
   fill: none;
   stroke-width: 1.6;

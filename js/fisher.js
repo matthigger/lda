@@ -90,7 +90,7 @@ function fPlane() {
       const o = mul(w, (k ? sg : -sg) * L);
       s += polySvg([add(b0, mul(pw, L)), add(add(b0, mul(pw, L)), o),
         add(add(b0, mul(pw, -L)), o), add(b0, mul(pw, -L))],
-        `class="side c${k}"`);
+        `class="halfplane c${k}"`);
     }
   }
   if (F.show.ell) {
@@ -194,7 +194,7 @@ function fHist(X, t, w, m) {
 
 // --------------------------------------------------------- J(θ) chart
 
-const CH = { w: 440, h: 200, x0: 46, x1: 428, y0: 26, y1: 164 };
+const CH = { w: 440, h: 218, x0: 46, x1: 428, y0: 44, y1: 182 };
 const pChart = document.getElementById("p-chart");
 pChart.setAttribute("viewBox", `0 0 ${CH.w} ${CH.h}`);
 
@@ -226,14 +226,26 @@ function fChart() {
   const marks = [[fBest(), "best", "Σ⁻¹(μ₁−μ₀)"], [fNaive(), "naive", "μ₁−μ₀"],
     [fPca(), "pca", "v₁ (PCA)"]].map(([a, cls, lab]) =>
     ({ x: xs(fold180(a)), y: ys(fJ(unit(a))), cls, lab }))
-    .sort((p, q) => p.x - q.x);
-  let lastX = -1e9, lift = 0;
+    .sort((p, q) => p.x - q.x)
+    .reduce((acc, mk) => {
+      // Coincident markers (ICA parts 1, 2) share one label: "a = b".
+      const prev = acc[acc.length - 1];
+      if (prev && Math.abs(mk.x - prev.x) < 1.5) prev.lab += ` = ${mk.lab}`;
+      else acc.push(mk);
+      return acc;
+    }, []);
+  // Labels sit in rows in the band above the curve (J* is drawn below
+  // it), so they never cover a marker; a faint leader drops to each one.
+  let lastX = -1e9, row = 0;
   for (const mk of marks) {
-    lift = mk.x - lastX < 70 ? lift + 13 : 0;
+    row = mk.x - lastX < 70 ? row + 1 : 0;
     lastX = mk.x;
-    s += `<path class="mk ${mk.cls}" d="M${mk.x},${mk.y - 1}l-5,-9h10z"/>
-      <text class="zl ${mk.cls}" x="${mk.x}" y="${Math.max(mk.y - 13 - lift,
-      10)}" text-anchor="middle">${mk.lab}</text>`;
+    const ly = CH.y0 - 2 - 15 * row, hw = 3.4 * mk.lab.length;
+    const lx = clamp(mk.x, hw + 2, CH.w - hw - 2);
+    s += `<line class="grid" x1="${mk.x}" x2="${mk.x}" y1="${ly + 3}"
+      y2="${mk.y - 10}"/><path class="mk ${mk.cls}"
+      d="M${mk.x},${mk.y - 1}l-5,-9h10z"/><text class="zl ${mk.cls}"
+      x="${lx}" y="${ly}" text-anchor="middle">${mk.lab}</text>`;
   }
   const xn = xs(fold180(F.phi));
   s += `<line class="c-now" x1="${xn}" x2="${xn}" y1="${CH.y0 - 8}"
