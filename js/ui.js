@@ -64,19 +64,24 @@ function arrowSvg(a, c, cls, head = 14) {
     </g>`;
 }
 
-/** SVG path of the k-sd ellipse {x : (x − mu)ᵀM⁻¹(x − mu) = k²}. */
-function ellipseSvg(mu, M, k, attrs) {
+/** 97 data points around the k-sd ellipse {x : (x − mu)ᵀM⁻¹(x − mu) = k²}. */
+function ellipsePts(mu, M, k) {
   const e = eig2(M.a, M.b, M.d), v1 = unit(isNaN(e.theta) ? 0 : e.theta);
   const v2 = perp(v1);
   const r1 = k * Math.sqrt(Math.max(e.l1, 0));
   const r2 = k * Math.sqrt(Math.max(e.l2, 0));
-  let d = "";
+  const out = [];
   for (let t = 0; t <= 96; t++) {
     const a = 2 * Math.PI * t / 96;
-    const q = add(mu, add(mul(v1, r1 * Math.cos(a)), mul(v2, r2 * Math.sin(a))));
-    d += `${t ? "L" : "M"}${px(q)}`;
+    out.push(add(mu, add(mul(v1, r1 * Math.cos(a)), mul(v2, r2 * Math.sin(a)))));
   }
-  return `<path d="${d}Z" ${attrs}/>`;
+  return out;
+}
+
+/** SVG path of the k-sd ellipse (see ellipsePts). */
+function ellipseSvg(mu, M, k, attrs) {
+  const d = ellipsePts(mu, M, k).map((q, t) => `${t ? "L" : "M"}${px(q)}`);
+  return `<path d="${d.join("")}Z" ${attrs}/>`;
 }
 
 /** Clip path over the plot box, then grid lines, ticks and axis labels. */

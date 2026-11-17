@@ -33,48 +33,48 @@
         <b>m</b>) along a unit direction <b>w</b>, and classify by a
         threshold <i>&tau;</i> on <i>t</i>, with the two classes' scores
         overlapping as little as possible.</p>
-      <p class="goal approach"><b>Approach:</b> (Fisher) push the projected
-        class means apart while keeping each projected class narrow: a big
-        gap relative to the spread.</p>
+      <p class="goal approach"><b>Approach:</b> (Fisher 1936) push the
+        projected class means apart while keeping each projected class
+        narrow: a large projected mean difference relative to the
+        within-class scatter along <b>w</b>.</p>
       <div class="formula">
         max<sub><b>w</b></sub> <i>J</i>(<b>w</b>) =
-        <span class="frac"><span>(<b>w</b><sup>T</sup>(<b>&mu;</b><sub>1</sub>
-        &minus; <b>&mu;</b><sub>0</sub>))<sup>2</sup></span><span><b>w</b><sup>T</sup>&Sigma;<b>w</b></span></span>
+        <span class="frac"><span>(<b>w</b><sup>T</sup>&Delta;)<sup>2</sup></span><span><b>w</b><sup>T</sup>&Sigma;<b>w</b></span></span>
         <span class="implies">&rArr;</span>
-        <b>w</b> &prop; &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
-        &minus; <b>&mu;</b><sub>0</sub>)
+        <b>w</b> &prop; &Sigma;<sup>&minus;1</sup>&Delta;, &nbsp;
+        &Delta; = <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub>
       </div>
-      <p class="muted">&Sigma; is the covariance within each class, shared
-        by both (with 1/<i>n</i>); each class's 40 samples have exactly
-        mean <b>&mu;</b><sub><i>k</i></sub> and covariance &Sigma;, and
+      <p class="muted">&Delta; is the mean difference and &Sigma; the
+        covariance within each class, shared by both (with 1/<i>n</i>);
+        each class's 40 samples have exactly mean
+        <b>&mu;</b><sub><i>k</i></sub> and covariance &Sigma;, and
         <b>m</b> = (<b>&mu;</b><sub>0</sub> + <b>&mu;</b><sub>1</sub>)/2.
         <i>J</i> ignores the length of <b>w</b>; its best value
-        <i>J</i>* = (<b>&mu;</b><sub>1</sub> &minus;
-        <b>&mu;</b><sub>0</sub>)<sup>T</sup>&Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
-        &minus; <b>&mu;</b><sub>0</sub>) is the squared Mahalanobis
-        distance between the means.</p>
+        <i>J</i>* = &Delta;<sup>T</sup>&Sigma;<sup>&minus;1</sup>&Delta;
+        = <i>D</i><sup>2</sup> is the squared Mahalanobis distance between
+        the means.</p>
     </div>
 
     <div data-show="bayes">
       <h2>Bayes boundary: LDA &rarr; QDA</h2>
       <p class="goal"><b>Goal:</b> predict the class with the larger
         posterior <i>P</i>(<i>y</i> = <i>k</i> | <b>x</b>) &prop;
-        <i>&pi;<sub>k</sub></i> <i>N</i>(<b>x</b>;
+        <i>P</i>(<i>y</i> = <i>k</i>) <i>N</i>(<b>x</b>;
         <b>&mu;</b><sub><i>k</i></sub>, &Sigma;<sub><i>k</i></sub>), the
         Bayes classifier: when the Gaussians are right, no rule has a
         lower error.</p>
       <p class="goal approach"><b>Approach:</b> the sign of the log-odds,
-        with <i>d<sub>k</sub></i><sup>2</sup> = (<b>x</b> &minus;
+        with <i>D<sub>k</sub></i><sup>2</sup> = (<b>x</b> &minus;
         <b>&mu;</b><sub><i>k</i></sub>)<sup>T</sup>&Sigma;<sub><i>k</i></sub><sup>&minus;1</sup>(<b>x</b>
         &minus; <b>&mu;</b><sub><i>k</i></sub>) the squared Mahalanobis
         distance to each mean. With one shared &Sigma; the quadratic terms
         cancel and the boundary <i>g</i> = 0 is a line (LDA); otherwise it
         is a conic (QDA).</p>
       <div class="formula">
-        <i>g</i>(<b>x</b>) = &frac12;<i>d</i><sub>0</sub><sup>2</sup>
-        &minus; &frac12;<i>d</i><sub>1</sub><sup>2</sup> &minus; &frac12;
-        log<span class="frac"><span>|&Sigma;<sub>1</sub>|</span><span>|&Sigma;<sub>0</sub>|</span></span>
-        + log<span class="frac"><span><i>&pi;</i><sub>1</sub></span><span><i>&pi;</i><sub>0</sub></span></span>
+        <i>g</i>(<b>x</b>) = &frac12;<i>D</i><sub>0</sub><sup>2</sup>
+        &minus; &frac12;<i>D</i><sub>1</sub><sup>2</sup> &minus; &frac12;
+        ln<span class="frac"><span>|&Sigma;<sub>1</sub>|</span><span>|&Sigma;<sub>0</sub>|</span></span>
+        + ln<span class="frac"><span><i>P</i>(<i>y</i> = 1)</span><span><i>P</i>(<i>y</i> = 0)</span></span>
         <span class="implies">&rArr;</span><span class="nowrap">&Sigma;<sub>0</sub> =
         &Sigma;<sub>1</sub>: <i>g</i>(<b>x</b>) = <b>w</b><sup>T</sup><b>x</b>
         + <i>b</i>, <b>w</b> = &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
@@ -93,40 +93,43 @@
         <li>Press <em>Sweep w</em> and watch the two histograms. Where is
           <i>J</i> highest?
           <details class="answer"><summary>Answer</summary>At <b>w</b>
-            &prop; &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
-            &minus; <b>&mu;</b><sub>0</sub>) (or its negative), the peak
+            &prop; &Sigma;<sup>&minus;1</sup>&Delta; (or its negative), the peak
             of the curve: there the two bumps are as far apart as they can
             be, measured in widths. Setting &nabla;<i>J</i> = 0 gives
-            &Sigma;<b>w</b> &prop; <b>&mu;</b><sub>1</sub> &minus;
-            <b>&mu;</b><sub>0</sub>.</details>
+            &Sigma;<b>w</b> &prop; &Delta;.</details>
         </li>
-        <li>Pick <em>skinny</em> (the notebook's last example) and press
-          <em>w = &mu;₁ &minus; &mu;₀</em>. Why not just use the
-          difference of the means?
+        <li>Pick <em>a bit of both</em> and press <em>w = &Delta;</em>,
+          then <em>w = &Sigma;'s short axis</em>, then <em>w =
+          &Sigma;<sup>&minus;1</sup>&Delta;</em>. Compare <i>J</i>.
+          <details class="answer"><summary>Answer</summary>&Delta; has the
+            largest projected mean difference and &Sigma;'s short axis the
+            smallest within-class scatter, yet both score <i>J</i> = 7.2.
+            &Sigma;<sup>&minus;1</sup>&Delta; = [2, &minus;2] gives up a
+            little of each and scores <i>J</i>* = 12.</details>
+        </li>
+        <li>Pick <em>skinny</em> and press <em>w = &Delta;</em>. Why not
+          just use the mean difference?
           <details class="answer"><summary>Answer</summary>The means
             differ equally in both features, but the horizontal variance
-            is 10 and the vertical only 0.1. Along
-            <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> the
-            horizontal noise swamps the gap: <i>J</i> is about 4% of the
+            is 10 and the vertical only 0.1. Along &Delta; the horizontal
+            noise swamps the mean difference: <i>J</i> is about 4% of the
             best. &Sigma;<sup>&minus;1</sup> discounts the noisy feature,
             so the best <b>w</b> is nearly vertical.</details>
         </li>
-        <li>Try <em>ICA part 1</em> and <em>part 2</em>. Why is
-          <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> already
-          the best direction there?
-          <details class="answer"><summary>Answer</summary>Because
-            <b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub> is an
-            eigenvector of &Sigma; (in part 2 every direction is, since
-            &Sigma; = <i>I</i>), so &Sigma;<sup>&minus;1</sup> only
-            rescales it.</details>
+        <li>Try <em>aligned</em> and <em>round &Sigma;</em>. Why is &Delta;
+          already the best direction there?
+          <details class="answer"><summary>Answer</summary>Because &Delta;
+            is an eigenvector of &Sigma; (for round &Sigma; every direction
+            is, since &Sigma; = <i>I</i>), so &Sigma;<sup>&minus;1</sup>
+            only rescales it.</details>
         </li>
         <li>On <em>tilted</em>, press <em>w = v₁ (PCA)</em>. How well does
           PCA's top direction separate the classes?
           <details class="answer"><summary>Answer</summary>Badly: about
             9% of the best <i>J</i>, with the bumps piled on top of each
             other. PCA never looks at the labels, so it picks the direction
-            of most total spread, here the long axis both clouds share. The
-            classes differ across that axis.</details>
+            of most total variance, here the long axis both clouds share.
+            The classes differ across that axis.</details>
         </li>
         <li>At the best <b>w</b>, drag <i>&tau;</i>. Where are the fewest
           training errors?
@@ -138,12 +141,12 @@
         </li>
       </ul>
       <ul class="try" data-show="bayes">
-        <li>With <em>share &Sigma;</em> on, slide <i>&pi;</i><sub>1</sub>.
+        <li>With <em>share &Sigma;</em> on, slide <i>P</i>(<i>y</i> = 1).
           What does the boundary do?
           <details class="answer"><summary>Answer</summary>It slides but
             never turns, toward the rarer class: the prior is only in
-            <i>b</i>, through log(<i>&pi;</i><sub>1</sub> /
-            <i>&pi;</i><sub>0</sub>). Its normal <b>w</b> =
+            <i>b</i>, through ln(<i>P</i>(<i>y</i> = 1) /
+            <i>P</i>(<i>y</i> = 0)). Its normal <b>w</b> =
             &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub> &minus;
             <b>&mu;</b><sub>0</sub>) is the Fisher direction from the
             first tab.</details>
@@ -176,9 +179,40 @@
             &Sigma;, so LDA is the right model. With 400 samples both land
             near the Bayes error.</details>
         </li>
+        <li>On <em>shared &Sigma;</em>, switch the plot to <em>3D</em>.
+          Where does the Bayes boundary come from?
+          <details class="answer"><summary>Answer</summary>Where the two
+            surfaces cross. Bayes picks the larger posterior, and
+            <i>P</i>(<i>y</i> = <i>k</i> | <b>x</b>) is proportional to
+            <i>P</i>(<i>y</i> = <i>k</i>) <i>p</i>(<b>x</b> | <i>y</i> =
+            <i>k</i>), so on each side of the boundary one surface is on
+            top. Drop the crossing to the floor and it is the line.</details>
+        </li>
+        <li>In 3D, set the height to <em>ln P(y = k) p(x | y = k)</em> and
+          switch between <em>shared &Sigma;</em> and <em>one wider</em>.
+          Why is the crossing straight in one and curved in the other?
+          <details class="answer"><summary>Answer</summary>Each surface is
+            &minus;&frac12;<i>D<sub>k</sub></i><sup>2</sup> + const, an
+            upside-down bowl whose shape is set by
+            &Sigma;<sub><i>k</i></sub>. With one shared &Sigma; the bowls
+            have the same shape and differ only in where they sit, so their
+            difference <i>g</i> has no quadratic terms: a tilted plane,
+            which crosses zero in a line. With different
+            &Sigma;<sub><i>k</i></sub> the bowls curve differently, the
+            difference stays quadratic and the crossing is a conic. Height
+            <em>g(x)</em> shows that difference directly.</details>
+        </li>
+        <li>Stay on <em>one wider</em> and pick <em>surfaces from: LDA
+          fit</em>. Why does LDA draw a line here?
+          <details class="answer"><summary>Answer</summary>LDA gives both
+            classes one pooled &Sigma;&#770;, so its two bowls always have
+            the same shape and always cross in a line, even when the true
+            classes (the black curve on the floor) call for a
+            curve.</details>
+        </li>
         <li>Hover a point on the Bayes boundary. What do
-          <i>d</i><sub>0</sub><sup>2</sup> and
-          <i>d</i><sub>1</sub><sup>2</sup> show?
+          <i>D</i><sub>0</sub><sup>2</sup> and
+          <i>D</i><sub>1</sub><sup>2</sup> show?
           <details class="answer"><summary>Answer</summary>With a shared
             &Sigma; and equal priors they are equal: the boundary is the
             set of points equally far from both means, measured in
@@ -252,8 +286,9 @@
         <div id="p-read"></div>
         <div class="kept" id="p-bar"></div>
         <div class="buttons">
-          <button id="p-wd">w = μ₁ − μ₀</button>
-          <button id="p-wf">w = Σ⁻¹(μ₁ − μ₀)</button>
+          <button id="p-wd">w = Δ</button>
+          <button id="p-ws">w = Σ's short axis</button>
+          <button id="p-wf">w = Σ⁻¹Δ</button>
           <button id="p-wp">w = v₁ (PCA)</button>
           <button id="p-spin">Sweep w</button>
         </div>
@@ -264,10 +299,10 @@
         <svg id="p-chart" class="chart pick" aria-label="Fisher's objective
           J against the angle of w"></svg>
         <p class="muted">Click or drag to set the angle of <b>w</b>. The
-          markers are where <b>w</b> = &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub>
-          &minus; <b>&mu;</b><sub>0</sub>), <b>&mu;</b><sub>1</sub> &minus;
-          <b>&mu;</b><sub>0</sub> and PCA's <b>v</b><sub>1</sub> (both
-          classes pooled) land.</p>
+          markers are where <b>w</b> = &Sigma;<sup>&minus;1</sup>&Delta;
+          (LDA), &Delta; (largest mean difference), &Sigma;'s short axis
+          (smallest within-class scatter) and PCA's <b>v</b><sub>1</sub>
+          (both classes pooled) land.</p>
       </div>
 
       <div class="card readout">
@@ -293,11 +328,17 @@
         <span class="key"><i class="dot shade"></i><span>shade: true
           <i>P</i>(<i>y</i> = 1 | <b>x</b>)</span></span>
       </div>
+      <div class="viewbar">
+        <div class="seg" id="b-view" aria-label="view"></div>
+        <span class="vgroup" data-v3 hidden><span class="vlabel">height</span>
+          <span class="seg" id="b-h3" aria-label="height"></span></span>
+        <span class="vgroup" data-v3 hidden><span class="vlabel">surfaces
+          from</span><span class="seg" id="b-m3" aria-label="surfaces
+          from"></span></span>
+      </div>
       <svg id="b-plane" aria-label="training samples of two Gaussian
         classes with the Bayes, LDA and QDA boundaries"></svg>
-      <p class="hint">Drag the means <b>&mu;</b><sub>0</sub> and
-        <b>&mu;</b><sub>1</sub>. Hover (or tap) anywhere for the log-odds
-        there. Shown: the training samples and the true 2-sd ellipses.</p>
+      <p class="hint" id="b-hint"></p>
     </div>
 
     <div class="side">
@@ -335,7 +376,7 @@
         <p class="warn" id="b-warn" hidden></p>
         <h3>Presets</h3>
         <div class="seg wrap" id="b-presets"></div>
-        <label class="slider"><span>prior <i>&pi;</i><sub>1</sub></span>
+        <label class="slider"><span>prior <i>P</i>(<i>y</i> = 1)</span>
           <span class="pair"><input type="range" id="b-pir" min="0.1"
             max="0.9" step="0.01"><input type="number" id="b-pi" min="0.1"
             max="0.9" step="0.05"></span></label>
@@ -375,7 +416,7 @@
   </main>
 
   <footer>
-    Part of the DS 4400 &ldquo;visually&rdquo; demos.
+    One of a set of &ldquo;visually&rdquo; demos.
     &middot;
     <a href="https://github.com/matthigger/lda">Source on GitHub</a>
     &middot;
@@ -388,6 +429,7 @@
   <script src="js/gauss.js"></script>
   <script src="js/fisher.js"></script>
   <script src="js/bayes.js"></script>
+  <script src="js/bayes3d.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

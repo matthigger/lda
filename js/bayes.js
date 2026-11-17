@@ -1,6 +1,6 @@
 // Bayes boundary tab: the student sets two true Gaussians (μ_k, Σ_k) and
-// the prior π₁; n training samples are drawn from them (n_k = π_k n, at
-// least 3 per class). LDA (one pooled Σ̂) and QDA (a Σ̂_k per class) are
+// the prior P(y = 1); n training samples are drawn from them
+// (n_k = P(y = k) n, at least 3 per class). LDA (one pooled Σ̂) and QDA (a Σ̂_k per class) are
 // fit to the training samples by maximum likelihood, and each boundary
 // g(x) = 0 is drawn: the true Bayes boundary, LDA's line and QDA's conic.
 // Test error is over BT fresh draws per class, weighted by the true
@@ -8,7 +8,8 @@
 //
 // The draws are fixed standard normals z mapped by x = μ_k + Σ_k^½ z, so
 // editing a mean or covariance moves the samples smoothly; New samples
-// redraws the training z.
+// redraws the training z. The 3D view (bayes3d.js) draws the same state
+// as surfaces over the plane.
 
 const BN_MAX = 400;
 const BT = 5000;
@@ -40,6 +41,14 @@ const B = {
   zTe: [normals(9001, BT), normals(9002, BT)],
   hover: null,
   truth: null,
+  // 3D view: height h3 (dens, log or g), model m3 (truth, lda or qda).
+  view: "2d",
+  h3: "dens",
+  m3: "truth",
+  cam: { theta: -0.55, phi: 0.75, zoom: 1 },
+  orbit: null,
+  // Everything one render computed, reused while orbiting.
+  last: null,
 };
 
 function bDraw() {
@@ -82,12 +91,12 @@ function bShade(md) {
 }
 
 /**
- * SVG path of the zero set of f on a BG x BG grid over the plot
- * (marching squares, linear interpolation along cell edges; a saddle
- * cell is resolved by the sign of its center). Cell segments are chained
- * through the grid edges they share into polylines, so dashes run on.
+ * Zero set of f on a BG x BG grid over the plot, as polylines of data
+ * points (marching squares, linear interpolation along cell edges; a
+ * saddle cell is resolved by the sign of its center). Cell segments are
+ * chained through the grid edges they share, so dashes run on.
  */
-function zeroPath(f) {
+function zeroLines(f) {
   const lo = PLANE.dom[0], h = (PLANE.dom[1] - lo) / BG, M = BG + 1;
   const v = new Float64Array(M * M);
   for (let j = 0; j < M; j++) {
@@ -138,21 +147,27 @@ function zeroPath(f) {
       out.push(k);
     }
   };
-  let d = "";
+  const lines = [];
   segs.forEach((sg, s) => {
     if (used[s]) return;
     used[s] = 1;
     const ids = walk(sg[0], s).reverse().concat(sg, walk(sg[1], s));
-    d += ids.map((k, t) => `${t ? "L" : "M"}${px(at.get(k))}`).join("");
+    lines.push(ids.map(k => at.get(k)));
   });
-  return d;
+  return lines;
 }
 
-function bPlaneRender(md, fits, Xtr) {
+/** SVG path data of polylines of data points. */
+function linesPath(lines) {
+  return lines.map(l => l.map((q, t) => `${t ? "L" : "M"}${px(q)}`).join(""))
+    .join("");
+}
+
+function bPlaneRender({ md, Xtr, lines, shade }) {
   const p = PLANE;
   let s = axesSvg("b-clip") + `<g clip-path="url(#b-clip)">`;
   if (B.show.shade) {
-    s += `<image href="${bShade(md)}" x="${p.x0}" y="${p.y0}"
+    s += `<image href="${shade}" x="${p.x0}" y="${p.y0}"
       width="${p.x1 - p.x0}" height="${p.y1 - p.y0}"
       preserveAspectRatio="none"/>`;
   }
@@ -162,11 +177,8 @@ function bPlaneRender(md, fits, Xtr) {
   Xtr.forEach((Xk, k) => Xk.forEach(x => {
     s += dotSvg(x, 4.8, `class="pt c${k}"`);
   }));
-  for (const [key, m] of [["qda", fits.qda], ["lda", fits.lda],
-    ["bayes", md]]) {
-    if (B.show[key]) {
-      s += `<path class="bnd ${key}" d="${zeroPath(x => logOdds(m, x))}"/>`;
-    }
+  for (const key of ["qda", "lda", "bayes"]) {
+    if (B.show[key]) s += `<path class="bnd ${key}" d="${linesPath(lines[key])}"/>`;
   }
   s += `</g><g id="b-hov"></g>`;
   B.mu.forEach((mu, k) => {
@@ -184,6 +196,11 @@ function bPlaneRender(md, fits, Xtr) {
 function bHoverRender() {
   const g = document.getElementById("b-hov"), el = document.getElementById("b-at");
   const md = B.truth, x = B.hover;
+  if (B.view === "3d") {
+    el.innerHTML = `<p class="muted">Switch the plot to 2D to read the
+      log-odds at a point.</p>`;
+    return;
+  }
   if (!x) {
     if (g) g.innerHTML = "";
     el.innerHTML = `<p class="muted">Move the pointer over the plot (or tap
@@ -197,13 +214,13 @@ function bHoverRender() {
   const post = posterior(md, x);
   el.innerHTML =
     row("<b>x</b>", fvec(x)) +
-    row("<i>d</i><sub>0</sub><sup>2</sup> = (<b>x</b> &minus; <b>&mu;</b><sub>0</sub>)<sup>T</sup>&Sigma;<sub>0</sub><sup>&minus;1</sup>(<b>x</b> &minus; <b>&mu;</b><sub>0</sub>)",
+    row("<i>D</i><sub>0</sub><sup>2</sup> = (<b>x</b> &minus; <b>&mu;</b><sub>0</sub>)<sup>T</sup>&Sigma;<sub>0</sub><sup>&minus;1</sup>(<b>x</b> &minus; <b>&mu;</b><sub>0</sub>)",
       `<span class="c0-t">${fmt(d0)}</span>`) +
-    row("<i>d</i><sub>1</sub><sup>2</sup> = (<b>x</b> &minus; <b>&mu;</b><sub>1</sub>)<sup>T</sup>&Sigma;<sub>1</sub><sup>&minus;1</sup>(<b>x</b> &minus; <b>&mu;</b><sub>1</sub>)",
+    row("<i>D</i><sub>1</sub><sup>2</sup> = (<b>x</b> &minus; <b>&mu;</b><sub>1</sub>)<sup>T</sup>&Sigma;<sub>1</sub><sup>&minus;1</sup>(<b>x</b> &minus; <b>&mu;</b><sub>1</sub>)",
       `<span class="c1-t">${fmt(d1)}</span>`) +
-    row("&minus;&frac12; log(|&Sigma;<sub>1</sub>| / |&Sigma;<sub>0</sub>|)", fmt(ldet)) +
-    row("log(<i>&pi;</i><sub>1</sub> / <i>&pi;</i><sub>0</sub>)", fmt(md.lp)) +
-    row("<i>g</i>(<b>x</b>) = &frac12;<i>d</i><sub>0</sub><sup>2</sup> &minus; &frac12;<i>d</i><sub>1</sub><sup>2</sup> + &hellip;",
+    row("&minus;&frac12; ln(|&Sigma;<sub>1</sub>| / |&Sigma;<sub>0</sub>|)", fmt(ldet)) +
+    row("ln(<i>P</i>(<i>y</i> = 1) / <i>P</i>(<i>y</i> = 0))", fmt(md.lp)) +
+    row("<i>g</i>(<b>x</b>) = &frac12;<i>D</i><sub>0</sub><sup>2</sup> &minus; &frac12;<i>D</i><sub>1</sub><sup>2</sup> + &hellip;",
       `<b>${fmt(gx)}</b>`) +
     row("<i>P</i>(<i>y</i> = 1 | <b>x</b>) = 1 / (1 + e<sup>&minus;<i>g</i></sup>)",
       fmt(post, 3)) +
@@ -221,9 +238,8 @@ function bReadRender(md, fits, Xtr, Xte) {
     line("bayes", "Bayes (true Gaussians)", md)}${
     line("lda", "LDA fit", fits.lda)}${line("qda", "QDA fit", fits.qda)}
     </table><p class="muted">Training: ${nk[0]} + ${nk[1]} samples. Test:
-    ${BT} fresh draws per class, weighted by <i>&pi;</i><sub>0</sub>,
-    <i>&pi;</i><sub>1</sub>. No classifier beats Bayes on test, up to the
-    noise of the draws.</p>`;
+    ${BT} fresh draws per class, weighted by the priors. No classifier
+    beats Bayes on test, up to the noise of the draws.</p>`;
   const fl = linearForm(fits.lda);
   let r = "";
   if (B.shared) {
@@ -271,6 +287,16 @@ function bFields() {
   for (const id of ["b-s100", "b-s101", "b-s110", "b-s111"]) {
     document.getElementById(id).disabled = B.shared;
   }
+  for (const [id, v] of [["b-view", B.view], ["b-h3", B.h3], ["b-m3", B.m3]]) {
+    for (const b of document.querySelectorAll(`#${id} button`)) {
+      b.setAttribute("aria-checked", b.dataset.v === v);
+    }
+  }
+  for (const e of document.querySelectorAll("[data-v3]")) {
+    e.hidden = B.view !== "3d";
+  }
+  bPlane.classList.toggle("orbit", B.view === "3d");
+  document.getElementById("b-hint").innerHTML = b3Hint();
   for (const b of document.querySelectorAll("#b-presets button")) {
     const P = BPRESETS.find(p => p[0] === b.dataset.v)[2];
     b.setAttribute("aria-checked", P.shared === B.shared &&
@@ -288,7 +314,11 @@ function bRender() {
   const fits = { lda: fitModel(Xtr[0], Xtr[1], true),
     qda: fitModel(Xtr[0], Xtr[1], false) };
   B.truth = md;
-  bPlaneRender(md, fits, Xtr);
+  const models = { bayes: md, lda: fits.lda, qda: fits.qda }, lines = {};
+  for (const key in models) lines[key] = zeroLines(x => logOdds(models[key], x));
+  B.last = { md, fits, Xtr, models, lines, shade: B.show.shade ? bShade(md) : null };
+  if (B.view === "3d") b3Render(B.last);
+  else bPlaneRender(B.last);
   bReadRender(md, fits, Xtr, Xte);
   bHoverRender();
   bFields();
@@ -316,6 +346,14 @@ document.getElementById("b-resample").onclick = () => {
   bRender();
 };
 
+segmented(document.getElementById("b-view"), [["2d", "2D"], ["3d", "3D"]],
+  v => { B.view = v; B.hover = null; bRender(); });
+segmented(document.getElementById("b-h3"), [["dens", "P(y = k) p(x | y = k)"],
+  ["log", "ln P(y = k) p(x | y = k)"], ["g", "g(x)"]],
+  v => { B.h3 = v; bRender(); });
+segmented(document.getElementById("b-m3"), [["truth", "true"],
+  ["lda", "LDA fit"], ["qda", "QDA fit"]], v => { B.m3 = v; bRender(); });
+
 for (const key of Object.keys(B.show)) {
   const el = document.getElementById(`b-show-${key}`);
   el.checked = B.show[key];
@@ -331,6 +369,10 @@ function bAt(q) {
 let bDrag = null;
 dragOn(bPlane, {
   down(h, q) {
+    if (B.view === "3d") {
+      B.orbit = q;
+      return true;
+    }
     if (h !== "m0" && h !== "m1") {
       B.hover = bAt(q);
       bHoverRender();
@@ -340,15 +382,28 @@ dragOn(bPlane, {
     return true;
   },
   move(q) {
+    if (B.orbit) {
+      B.cam.theta += (q.x - B.orbit.x) * 0.01;
+      B.cam.phi = clamp(B.cam.phi + (q.y - B.orbit.y) * 0.01, 0.12, 1.5);
+      B.orbit = q;
+      b3Render(B.last);
+      return;
+    }
     const p = [S.ix(q.x), S.iy(q.y)];
     B.mu[bDrag] = p.map(v => clamp(v, -7.5, 7.5));
     B.hover = null;
     bRender();
   },
-  up() { bDrag = null; },
+  up() { bDrag = null; B.orbit = null; },
 });
+bPlane.addEventListener("wheel", e => {
+  if (B.view !== "3d") return;
+  e.preventDefault();
+  B.cam.zoom = clamp(B.cam.zoom * Math.exp(-e.deltaY * 0.001), 0.5, 2.5);
+  b3Render(B.last);
+}, { passive: false });
 bPlane.addEventListener("pointermove", e => {
-  if (bDrag !== null) return;
+  if (bDrag !== null || B.view === "3d") return;
   B.hover = bAt(svgPoint(bPlane, e));
   bHoverRender();
 });

@@ -3,9 +3,10 @@
 //
 // A model holds two classes, k = 0, 1, with means mu[k], covariances S[k]
 // and priors pi[k]. Its log-odds
-//   g(x) = log π₁N(x; μ₁, Σ₁) − log π₀N(x; μ₀, Σ₀)
-//        = ½d₀² − ½d₁² − ½ log(|Σ₁| / |Σ₀|) + log(π₁ / π₀),
-// d_k² = (x − μ_k)ᵀΣ_k⁻¹(x − μ_k), is > 0 where class 1 is more likely.
+//   g(x) = ln P(y=1)N(x; μ₁, Σ₁) − ln P(y=0)N(x; μ₀, Σ₀)
+//        = ½D₀² − ½D₁² − ½ ln(|Σ₁| / |Σ₀|) + ln(P(y=1) / P(y=0)),
+// D_k² = (x − μ_k)ᵀΣ_k⁻¹(x − μ_k), is > 0 where class 1 is more likely.
+// (pi[k] in code is the prior P(y = k).)
 // With Σ₀ = Σ₁ = Σ the quadratic terms cancel: g(x) = wᵀx + b with
 // w = Σ⁻¹(μ₁ − μ₀), a line.
 
@@ -67,6 +68,12 @@ function model(mu0, mu1, S0, S1, pi1) {
 
 /** Squared Mahalanobis distance from x to class k's mean. */
 function maha2(md, k, x) { return quad(md.Si[k], sub(x, md.mu[k])); }
+
+/** ln P(y = k) N(x; μ_k, Σ_k): the log of the 3D view's surface k. */
+function logJoint(md, k, x) {
+  return Math.log(md.pi[k]) - 0.5 * md.ld[k] - Math.log(2 * Math.PI) -
+    0.5 * maha2(md, k, x);
+}
 
 /** Log-odds g(x) of class 1 over class 0. */
 function logOdds(md, x) {

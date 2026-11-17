@@ -500,6 +500,8 @@ input[type="number"]:focus {
 .mk.best { fill: var(--green); }
 .mk.naive { fill: var(--ink); }
 .mk.pca { fill: #8a93a3; }
+.mk.short { fill: var(--amber); }
+.zl.short { fill: var(--amber); }
 .zl.best { fill: var(--green); font-weight: 600; }
 .zl.naive { fill: var(--ink); }
 .gap-t { color: var(--violet); }
@@ -573,3 +575,24 @@ table.errs .ln { margin-right: 8px; }
 #p-chart .tick { font-size: 12px; fill: var(--muted); }
 #p-chart .zl { font-size: 12px; }
 #p-chart .axis-label.sm { font-size: 12.5px; }
+
+/* ----------------------------------------------------------- 3D view */
+.viewbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 2px 0 6px;
+  font-size: .86rem;
+}
+.viewbar .vgroup { display: inline-flex; align-items: center; gap: 6px; }
+.viewbar .vlabel { color: var(--muted); white-space: nowrap; }
+.viewbar .seg button { font-size: .82rem; white-space: nowrap; }
+svg.orbit { cursor: grab; }
+svg.orbit:active { cursor: grabbing; }
+.floor3 { fill: #f7f8fb; stroke: #a3abb9; stroke-dasharray: 4 3; }
+.mesh3 polygon { stroke: #fff; stroke-opacity: .35; stroke-width: .6; }
+.zaxis { stroke: #8a93a3; stroke-width: 1.4; }
+.cross3 { fill: none; stroke: var(--ink); stroke-width: 3.4;
+  stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.cross3.halo { stroke: #fff; stroke-width: 7; stroke-opacity: .85; }

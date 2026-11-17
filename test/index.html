@@ -47,6 +47,9 @@
         const sh = model(c.mu0, c.mu1, c.S0, c.S0, c.pi1), lf = linearForm(sh);
         check(`truth ${i} shared: g = wᵀx + b`, maxErr(
           c.P.map(x => dot(lf.w, x) + lf.b), c.g_shared), 1e-9);
+        check(`truth ${i} ln P(y=k)p(x|y=k) vs scipy`, Math.max(
+          maxErr(c.P.map(x => logJoint(md, 0, x)), c.lj0),
+          maxErr(c.P.map(x => logJoint(md, 1, x)), c.lj1)), 1e-9);
         check(`truth ${i} Fisher direction`,
           maxErr(fisherDir(c.mu0, c.mu1, c.S0), c.fisher), 1e-9);
       });

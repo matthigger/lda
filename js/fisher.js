@@ -4,21 +4,24 @@
 // histogrammed by class beside w's line, and a draggable threshold τ on
 // the scores: predict class 1 on μ₁'s side of τ.
 //
-// Fisher's objective J(w) = (wᵀ(μ₁ − μ₀))² / wᵀΣw, the squared gap
-// between the projected means over the spread of each projected class,
-// peaks at w ∝ Σ⁻¹(μ₁ − μ₀) with height J* = (μ₁ − μ₀)ᵀΣ⁻¹(μ₁ − μ₀).
+// Fisher's objective J(w) = (wᵀΔ)² / wᵀΣw, Δ = μ₁ − μ₀: the squared
+// projected mean difference over the within-class scatter along w. It
+// peaks at w ∝ Σ⁻¹Δ with height J* = ΔᵀΣ⁻¹Δ = D², the squared Mahalanobis
+// distance between the means (Fisher 1936).
 
 const FN = 40;
 const FMAX = 12;
 
+// "a bit of both": the largest mean difference (Δ = [6, 0]) and the
+// smallest within-class scatter (Σ's short axis [1, −2]) tie at J = 7.2,
+// while w ∝ Σ⁻¹Δ = [2, −2] reaches J* = 12.
 const FPRESETS = [
   ["tilt", "tilted", { mu: [[0, -1], [0.5, 1]], S: { a: 4.6, b: 2.4, d: 1.9 } }],
-  ["ica1", "ICA part 1", { mu: [[2, 2], [-2, -2]], S: { a: 2, b: 1, d: 2 } }],
-  ["ica2", "ICA part 2", { mu: [[2, -2], [2, 2]], S: { a: 1, b: 0, d: 1 } }],
-  ["ica3", "ICA part 3", { mu: [[5, -2], [3, 4]], S: { a: 2, b: 1, d: 2 } }],
+  ["both", "a bit of both", { mu: [[-3, 0], [3, 0]], S: { a: 5, b: 2, d: 2 } }],
+  ["aligned", "aligned", { mu: [[2, 2], [-2, -2]], S: { a: 2, b: 1, d: 2 } }],
+  ["round", "round Σ", { mu: [[2, -2], [2, 2]], S: { a: 1, b: 0, d: 1 } }],
   ["skinny", "skinny", { mu: [[0, 0], [1, 1]], S: { a: 10, b: 0, d: 0.1 } }],
-  ["gb", "[[3, −1], [−1, 4]]", { mu: [[0, 0], [2, 3]],
-    S: { a: 3, b: -1, d: 4 } }],
+  ["back", "tilted back", { mu: [[0, 0], [2, 3]], S: { a: 3, b: -1, d: 4 } }],
 ];
 
 const F = {
@@ -52,6 +55,12 @@ const fJstar = () => quad(inv2(F.S), fD());
 function fBest() {
   const v = fisherDir(F.mu[0], F.mu[1], F.S);
   return Math.atan2(v[1], v[0]);
+}
+
+/** Angle of Σ's short axis: the smallest within-class scatter. */
+function fShort() {
+  const e = eig2(F.S.a, F.S.b, F.S.d);
+  return (isNaN(e.theta) ? 0 : e.theta) + 90 * DEG;
 }
 
 /** Angle of μ₁ − μ₀. */
@@ -194,7 +203,7 @@ function fHist(X, t, w, m) {
 
 // --------------------------------------------------------- J(θ) chart
 
-const CH = { w: 440, h: 218, x0: 46, x1: 428, y0: 44, y1: 182 };
+const CH = { w: 440, h: 233, x0: 46, x1: 428, y0: 59, y1: 197 };
 const pChart = document.getElementById("p-chart");
 pChart.setAttribute("viewBox", `0 0 ${CH.w} ${CH.h}`);
 
@@ -223,12 +232,12 @@ function fChart() {
     d += `${d ? "L" : "M"}${xs(th).toFixed(1)},${ys(fJ(unit(th * DEG))).toFixed(1)}`;
   }
   s += `<path class="c-J" d="${d}"/>`;
-  const marks = [[fBest(), "best", "Σ⁻¹(μ₁−μ₀)"], [fNaive(), "naive", "μ₁−μ₀"],
-    [fPca(), "pca", "v₁ (PCA)"]].map(([a, cls, lab]) =>
+  const marks = [[fBest(), "best", "Σ⁻¹Δ"], [fNaive(), "naive", "Δ"],
+    [fShort(), "short", "Σ short axis"], [fPca(), "pca", "v₁ (PCA)"]].map(([a, cls, lab]) =>
     ({ x: xs(fold180(a)), y: ys(fJ(unit(a))), cls, lab }))
     .sort((p, q) => p.x - q.x)
     .reduce((acc, mk) => {
-      // Coincident markers (ICA parts 1, 2) share one label: "a = b".
+      // Coincident markers share one label: "a = b".
       const prev = acc[acc.length - 1];
       if (prev && Math.abs(mk.x - prev.x) < 1.5) prev.lab += ` = ${mk.lab}`;
       else acc.push(mk);
@@ -291,13 +300,13 @@ function fRead(miss) {
   document.getElementById("p-read").innerHTML =
     row("<b>w</b> (unit)", `${fvec(w)} at ${fmt(((F.phi / DEG) % 360 + 360) %
       360, 0)}°`) +
-    row("gap: <b>w</b><sup>T</sup>(<b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub>)",
+    row("projected mean difference <b>w</b><sup>T</sup>&Delta;",
       `<span class="gap-t">${fmt(gap, 3)}</span>`) +
-    row("spread: <b>w</b><sup>T</sup>&Sigma;<b>w</b>",
+    row("within-class scatter <b>w</b><sup>T</sup>&Sigma;<b>w</b>",
       `<span class="spr-t">${fmt(v, 3)}</span>`) +
-    row("<i>J</i>(<b>w</b>) = gap<sup>2</sup> / spread",
+    row("<i>J</i>(<b>w</b>) = (<b>w</b><sup>T</sup>&Delta;)<sup>2</sup> / <b>w</b><sup>T</sup>&Sigma;<b>w</b>",
       `<span class="kept-t">${fmt(J, 3)}</span>`) +
-    row("best: <i>J</i>* = (<b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub>)<sup>T</sup>&Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub> &minus; <b>&mu;</b><sub>0</sub>)",
+    row("best: <i>J</i>* = &Delta;<sup>T</sup>&Sigma;<sup>&minus;1</sup>&Delta; = <i>D</i><sup>2</sup>",
       fmt(js, 3));
   const f = js > 0 ? clamp(J / js, 0, 1) : 1;
   document.getElementById("p-bar").innerHTML =
@@ -349,7 +358,8 @@ function fStopSpin() {
   document.getElementById("p-spin").textContent = "Sweep w";
 }
 
-for (const [id, ang] of [["p-wd", fNaive], ["p-wf", fBest], ["p-wp", fPca]]) {
+for (const [id, ang] of [["p-wd", fNaive], ["p-ws", fShort], ["p-wf", fBest],
+  ["p-wp", fPca]]) {
   document.getElementById(id).onclick = () => {
     fStopSpin();
     F.phi = ang();

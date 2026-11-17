@@ -71,6 +71,8 @@ def truth_case(seed: int) -> dict:
         "g": log_odds(probe, mu0, mu1, s0, s1, pi1).tolist(),
         "g_shared": log_odds(probe, mu0, mu1, s0, s0, pi1).tolist(),
         "fisher": fisher.tolist(),
+        "lj0": (mvn(mu0, s0).logpdf(probe) + np.log(1 - pi1)).tolist(),
+        "lj1": (mvn(mu1, s1).logpdf(probe) + np.log(pi1)).tolist(),
     }
 
 
