@@ -90,14 +90,6 @@
     <div>
       <h3>Try this</h3>
       <ul class="try" data-show="fisher">
-        <li>Press <em>Sweep w</em> and watch the two histograms. Where is
-          <i>J</i> highest?
-          <details class="answer"><summary>Answer</summary>At <b>w</b>
-            &prop; &Sigma;<sup>&minus;1</sup>&Delta; (or its negative), the peak
-            of the curve: there the two bumps are as far apart as they can
-            be, measured in widths. Setting &nabla;<i>J</i> = 0 gives
-            &Sigma;<b>w</b> &prop; &Delta;.</details>
-        </li>
         <li>Pick <em>a bit of both</em> and press <em>w = &Delta;</em>,
           then <em>w = &Sigma;'s short axis</em>, then <em>w =
           &Sigma;<sup>&minus;1</sup>&Delta;</em>. Compare <i>J</i>.
@@ -116,13 +108,6 @@
             best. &Sigma;<sup>&minus;1</sup> discounts the noisy feature,
             so the best <b>w</b> is nearly vertical.</details>
         </li>
-        <li>Try <em>aligned</em> and <em>round &Sigma;</em>. Why is &Delta;
-          already the best direction there?
-          <details class="answer"><summary>Answer</summary>Because &Delta;
-            is an eigenvector of &Sigma; (for round &Sigma; every direction
-            is, since &Sigma; = <i>I</i>), so &Sigma;<sup>&minus;1</sup>
-            only rescales it.</details>
-        </li>
         <li>On <em>tilted</em>, press <em>w = v₁ (PCA)</em>. How well does
           PCA's top direction separate the classes?
           <details class="answer"><summary>Answer</summary>Badly: about
@@ -130,14 +115,6 @@
             other. PCA never looks at the labels, so it picks the direction
             of most total variance, here the long axis both clouds share.
             The classes differ across that axis.</details>
-        </li>
-        <li>At the best <b>w</b>, drag <i>&tau;</i>. Where are the fewest
-          training errors?
-          <details class="answer"><summary>Answer</summary>Near
-            <i>&tau;</i> = 0, the midpoint <b>m</b>: the classes are the
-            same size and the same width along <b>w</b>, so the bumps cross
-            halfway between their means. The next tab shows that this line
-            is the Bayes boundary for equal priors.</details>
         </li>
       </ul>
       <ul class="try" data-show="bayes">
@@ -147,60 +124,23 @@
             never turns, toward the rarer class: the prior is only in
             <i>b</i>, through ln(<i>P</i>(<i>y</i> = 1) /
             <i>P</i>(<i>y</i> = 0)). Its normal <b>w</b> =
-            &Sigma;<sup>&minus;1</sup>(<b>&mu;</b><sub>1</sub> &minus;
-            <b>&mu;</b><sub>0</sub>) is the Fisher direction from the
-            first tab.</details>
+            &Sigma;<sup>&minus;1</sup>&Delta; is the Fisher direction from
+            the first tab.</details>
         </li>
-        <li>Pick <em>one wider</em>. What shape is the Bayes boundary, and
-          why?
-          <details class="answer"><summary>Answer</summary>An ellipse
-            around the tight class 0. Far from <b>&mu;</b><sub>0</sub> in
-            any direction, the wide class is the more likely one, so class
-            0 only wins on an island around its mean.</details>
-        </li>
-        <li>Pick <em>crossed</em>, then <em>same mean</em>. How does LDA
-          do?
-          <details class="answer"><summary>Answer</summary>About as well
-            as a coin flip, or always guessing the bigger class. The means
-            match, so <b>&mu;&#770;</b><sub>1</sub> &minus;
-            <b>&mu;&#770;</b><sub>0</sub> is just noise and LDA's line is
-            nearly arbitrary. The classes differ only in their covariances,
-            which only QDA uses: a hyperbola for crossed, a circle for same
-            mean.</details>
-        </li>
-        <li>Back on <em>shared &Sigma;</em>, set <i>n</i> = 10 and press
-          <em>New samples</em> a few times. Compare LDA and QDA on train
-          and on test, then raise <i>n</i> to 400.
-          <details class="answer"><summary>Answer</summary>At
-            <i>n</i> = 10, QDA does at least as well as LDA on the training
-            samples almost every time, yet worse on test almost every time:
-            it fits 11 numbers (two means, two covariances, a prior) to
-            LDA's 8, and the extra 3 chase noise. The truth here has one
-            &Sigma;, so LDA is the right model. With 400 samples both land
-            near the Bayes error.</details>
-        </li>
-        <li>On <em>shared &Sigma;</em>, switch the plot to <em>3D</em>.
-          Where does the Bayes boundary come from?
-          <details class="answer"><summary>Answer</summary>Where the two
-            surfaces cross. Bayes picks the larger posterior, and
-            <i>P</i>(<i>y</i> = <i>k</i> | <b>x</b>) is proportional to
-            <i>P</i>(<i>y</i> = <i>k</i>) <i>p</i>(<b>x</b> | <i>y</i> =
-            <i>k</i>), so on each side of the boundary one surface is on
-            top. Drop the crossing to the floor and it is the line.</details>
-        </li>
-        <li>In 3D, set the height to <em>ln P(y = k) p(x | y = k)</em> and
-          switch between <em>shared &Sigma;</em> and <em>one wider</em>.
-          Why is the crossing straight in one and curved in the other?
-          <details class="answer"><summary>Answer</summary>Each surface is
-            &minus;&frac12;<i>D<sub>k</sub></i><sup>2</sup> + const, an
-            upside-down bowl whose shape is set by
+        <li>Switch the plot to <em>3D</em>, set the height to <em>ln P(y =
+          k) p(x | y = k)</em>, and compare <em>shared &Sigma;</em> with
+          <em>one wider</em>. Where does the boundary come from, and why is
+          it straight in one and curved in the other?
+          <details class="answer"><summary>Answer</summary>Bayes picks the
+            class whose surface is on top, so the boundary is where the
+            surfaces cross. Each is &minus;&frac12;<i>D<sub>k</sub></i><sup>2</sup>
+            + const, an upside-down bowl shaped by
             &Sigma;<sub><i>k</i></sub>. With one shared &Sigma; the bowls
-            have the same shape and differ only in where they sit, so their
-            difference <i>g</i> has no quadratic terms: a tilted plane,
-            which crosses zero in a line. With different
-            &Sigma;<sub><i>k</i></sub> the bowls curve differently, the
-            difference stays quadratic and the crossing is a conic. Height
-            <em>g(x)</em> shows that difference directly.</details>
+            have the same shape, so their difference <i>g</i> has no
+            quadratic terms: a tilted plane, which crosses zero in a line.
+            With different &Sigma;<sub><i>k</i></sub> the difference stays
+            quadratic and the crossing is a conic, here an ellipse around
+            the tight class.</details>
         </li>
         <li>Stay on <em>one wider</em> and pick <em>surfaces from: LDA
           fit</em>. Why does LDA draw a line here?
@@ -210,13 +150,16 @@
             classes (the black curve on the floor) call for a
             curve.</details>
         </li>
-        <li>Hover a point on the Bayes boundary. What do
-          <i>D</i><sub>0</sub><sup>2</sup> and
-          <i>D</i><sub>1</sub><sup>2</sup> show?
-          <details class="answer"><summary>Answer</summary>With a shared
-            &Sigma; and equal priors they are equal: the boundary is the
-            set of points equally far from both means, measured in
-            &Sigma;'s units rather than in plain distance.</details>
+        <li>On <em>shared &Sigma;</em>, set <i>n</i> = 10 and press
+          <em>New samples</em> a few times. Compare LDA and QDA on train
+          and on test, then raise <i>n</i> to 400.
+          <details class="answer"><summary>Answer</summary>At
+            <i>n</i> = 10, QDA does at least as well as LDA on the training
+            samples almost every time, yet worse on test almost every time:
+            it fits 11 numbers (two means, two covariances, a prior) to
+            LDA's 8, and the extra 3 chase noise. The truth here has one
+            &Sigma;, so LDA is the right model. With 400 samples both land
+            near the Bayes error.</details>
         </li>
       </ul>
     </div>
