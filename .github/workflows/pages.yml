@@ -32,7 +32,7 @@ jobs:
       # with the commit keeps a fresh index.html from running stale JS.
       - name: Cache-bust assets
         run: |
-          sed -i -E "s#(src=\"js/[a-z]+\.js|href=\"style\.css)\"#\1?v=${GITHUB_SHA::7}\"#" index.html
+          sed -i -E "s#(src=\"js/[a-z0-9]+\.js|href=\"style\.css)\"#\1?v=${GITHUB_SHA::7}\"#" index.html
           grep -n '?v=' index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
