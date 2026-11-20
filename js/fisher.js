@@ -12,12 +12,12 @@
 const FN = 40;
 const FMAX = 12;
 
-// "a bit of both": the largest mean difference (Δ = [6, 0]) and the
-// smallest within-class scatter (Σ's short axis [1, −2]) tie at J = 7.2,
-// while w ∝ Σ⁻¹Δ = [2, −2] reaches J* = 12.
+// "a bit of both": the largest mean difference (Δ = [5, 0], J = 25/3) and
+// the smallest within-class scatter (Σ's short axis [1, −1], J = 12.5) each
+// lose to w ∝ Σ⁻¹Δ = [3, −2], which reaches J* = 15.
 const FPRESETS = [
   ["tilt", "tilted", { mu: [[0, -1], [0.5, 1]], S: { a: 4.6, b: 2.4, d: 1.9 } }],
-  ["both", "a bit of both", { mu: [[-3, 0], [3, 0]], S: { a: 5, b: 2, d: 2 } }],
+  ["both", "a bit of both", { mu: [[-2.5, 0], [2.5, 0]], S: { a: 3, b: 2, d: 3 } }],
   ["aligned", "aligned", { mu: [[2, 2], [-2, -2]], S: { a: 2, b: 1, d: 2 } }],
   ["round", "round Σ", { mu: [[2, -2], [2, 2]], S: { a: 1, b: 0, d: 1 } }],
   ["skinny", "skinny", { mu: [[0, 0], [1, 1]], S: { a: 10, b: 0, d: 0.1 } }],
